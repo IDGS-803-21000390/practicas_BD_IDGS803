@@ -61,6 +61,54 @@ def alum():
 def page_not_found(e):
     return render_template('404.html'),404
 
+@app.route("/eliminar",methods=["GET","POST"])
+def eliminar():
+    emp_form=forms.UsarForm(request.form)
+    if request.method=='GET':
+        id=request.args.get('id')
+        #aqui pasamos la condicion que queremos buscar 
+        emp1=db.session.query(Empleado).filter(Empleado.id==id).first()
+        emp_form.id.data=request.args.get('id')
+        emp_form.nombre.data=emp1.nombre
+        emp_form.telefono.data=emp1.telefono
+        emp_form.email.data=emp1.correo
+        emp_form.sueldo.data=emp1.sueldo
+        emp_form.direccion.data=emp1.direccion
+    if request.method=='POST':
+        id=emp_form.id.data
+        alum=Empleado.query.get(id)
+        db.session.delete(alum)
+        db.session.commit()
+        return redirect('ABC_Completo')
+    return render_template('eliminar.html',form=emp_form)
+
+
+
+@app.route("/modificar",methods=["GET","POST"])
+def modificar():
+    emp_form=forms.UsarForm(request.form)
+    if request.method=='GET':
+        id=request.args.get('id')
+        #aqui pasamos la condicion que queremos buscar 
+        emp1=db.session.query(Empleado).filter(Empleado.id==id).first()
+        emp_form.id.data=request.args.get('id')
+        emp_form.nombre.data=emp1.nombre
+        emp_form.telefono.data=emp1.telefono
+        emp_form.email.data=emp1.correo
+        emp_form.sueldo.data=emp1.sueldo
+        emp_form.direccion.data=emp1.direccion
+    if request.method=='POST':
+        id=emp_form.id.data
+        emp1=db.session.query(Empleado).filter(Empleado.id==id).first()
+        emp1.nombre=emp_form.nombre.data
+        emp1.telefono=emp_form.telefono.data 
+        emp1.correo=emp_form.email.data
+        emp1.direccion=emp_form.direccion.data
+        db.session.add(emp1)
+        db.session.commit()
+        return redirect('ABC_Completo')
+    return render_template('modificar.html',form=emp_form)
+
 
 
 #especificar el metodo que va a arrancar la aplicacion 
