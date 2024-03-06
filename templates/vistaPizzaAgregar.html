@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+  {% from "_macros.html" import render_field %}
+
+  <div class="container">
+    <div class="row">
+      <form name="agregar" action="/regritrarP" id="registro" method="post">
+
+        <div class="row">
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form.nombreCompleto, class="form-control") }}
+            </div>
+          </div>
+
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form.direccion, class="form-control") }}
+            </div>
+          </div>
+
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form.telefono, class="form-control") }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Segunda fila: Tamaño, Ingredientes, Número de Pizza -->
+        <div class="row">
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form2.tamanio, class="form-control") }}
+            </div>
+          </div>
+
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form2.ingredientes, class="form-control") }}
+            </div>
+          </div>
+
+          <div class="col-xs-4">
+            <div class="form-group float-label-form-group controls">
+              {{ render_field(form2.numeropizza, class="form-control") }}
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="submit" id="registrar" name="registrar" value="agregar" />
+      </form>
+    </div>
+  </div>
+
+{% endblock %}

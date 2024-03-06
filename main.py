@@ -2,14 +2,19 @@ from flask import Flask,render_template,request,flash,Response,g
 from flask_wtf.csrf import CSRFProtect
 from flask import redirect
 import forms
+import formspizza
 from models import db
-
+from datetime import datetime
 
 from config import DevelopmentConfig
 from models import Empleado
-
+from models import Cliente
+from models import Pizza
+from models import Venta
+from config import DevelopmentConfig2 
+idPizza=0
 app=Flask(__name__)
-app.config.from_object(DevelopmentConfig)
+app.config.from_object(DevelopmentConfig2)
 csrf=CSRFProtect()
 
 #nombre correo telefono, direcion, sueldo
@@ -26,6 +31,7 @@ def index():
          #para mandar los datos seran por seciones 
          db.session.add(emp)
          db.session.commit()
+         
 
     return render_template("index.html",form=emp_form)
 
@@ -109,14 +115,80 @@ def modificar():
         return redirect('ABC_Completo')
     return render_template('modificar.html',form=emp_form)
 
+@app.route("/pizzaA",methods=["GET","POST"])
+def pizzaA():
+    pizza_form=formspizza.PizzaForm(request.form)
+    pizza_form2=formspizza.clienteForm(request.form)
+    t=pizza_form.tamanio.data
+    i=pizza_form.ingredientes.data
+    print(t,i)
+    return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form)
+
+@app.route("/regritrarP",methods=["GET","POST"])
+def registra():
+    fecha_compra = datetime.now().date()
+    pizza_form=formspizza.PizzaForm(request.form)
+    pizza_form2=formspizza.clienteForm(request.form)
+    t=int(pizza_form.tamanio.data)
+    i=int(len(pizza_form.ingredientes.data))
+    subtotal=0
+    if t==40:
+        tam='Chica'
+    elif t==80:
+        tam='Mediana'
+    elif t==120:
+        tam='Grande'
+    
+    if i>1:
+        ingre = ', '.join(pizza_form.ingredientes.data)
+    else:
+        ingre=pizza_form.tamanio.data
+    
+    if request.method=='POST' and pizza_form.validate() and pizza_form2.validate():
+        subtotal=t+(10*i)
+        cl=Cliente(nombre_completo=pizza_form2.nombreCompleto.data,
+                      telefono=pizza_form2.telefono.data,
+                      direcion=pizza_form2.direccion.data,
+                      fecha_compra=fecha_compra)
+         #para mandar los datos seran por seciones 
+        db.session.add(cl)
+        db.session.commit()
+        id_cliente = cl.idCliente
+        pizza=Pizza(tamanio=tam,ingredientes=ingre,numero_pizza=pizza_form.numeropizza.data,subtotal=subtotal,idCliente=id_cliente)
+        
+        try:    
+            
+            db.session.add(pizza)
+            db.session.commit()
+            print(idPizza=pizza.idPizza)
+            print("aqui")
+        except Exception as e:
+            print(f"Error al realizar la inserción: {e}")
+    
+    db.session.rollback()  # Deshacer la transacción en caso de error
+
+   
+
+
+    return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form)
+
+@app.route("/tabla",methods=["GET","POST"])
+def tabla():
+    pizza_form=formspizza.PizzaForm(request.form)
+    #para hacer una consulta
+    pizza=Pizza.query.all()
+    if 'btn1' in request.form:
+        print(request.form)
+    return render_template("vistaPizzaQTV.html",pizza=pizza)
+
 
 
 #especificar el metodo que va a arrancar la aplicacion 
 if __name__=="__main__":
     csrf.init_app(app)
     db.init_app(app)
-    with app.app_context():
-        db.create_all()
+   # with app.app_context():
+   #     db.create_all()
     app.run()    
 
 

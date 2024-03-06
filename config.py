@@ -11,4 +11,8 @@ class DevelopmentConfig(Config):
     DEBUG=True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://yaz:12345678@127.0.0.1/pruba'
     SQLALCHEMY_TRACK_MODIFICATIONS=False
-#crear nuevo usuario en mysql
+
+class DevelopmentConfig2(Config):
+    DEBUG=True
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://yaz:12345678@127.0.0.1/pizeria'
+    SQLALCHEMY_TRACK_MODIFICATIONS=False
