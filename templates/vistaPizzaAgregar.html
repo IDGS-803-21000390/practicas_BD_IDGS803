@@ -1,58 +1,123 @@
 {% extends "layout.html" %}
 
 {% block content %}
-
   {% from "_macros.html" import render_field %}
-
+  <script src="{{ url_for('static', filename='js/controladorPizza.js') }}"></script>
   <div class="container">
     <div class="row">
-      <form name="agregar" action="/regritrarP" id="registro" method="post">
+      <form id="login-form" >
 
+        
         <div class="row">
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form.nombreCompleto, class="form-control") }}
             </div>
           </div>
 
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form.direccion, class="form-control") }}
             </div>
           </div>
 
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form.telefono, class="form-control") }}
             </div>
           </div>
         </div>
 
-        <!-- Segunda fila: Tamaño, Ingredientes, Número de Pizza -->
         <div class="row">
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form2.tamanio, class="form-control") }}
             </div>
           </div>
 
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form2.ingredientes, class="form-control") }}
             </div>
           </div>
 
-          <div class="col-xs-4">
+          <div class="col-md-4">
             <div class="form-group float-label-form-group controls">
               {{ render_field(form2.numeropizza, class="form-control") }}
             </div>
           </div>
         </div>
 
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <input type="submit" id="registrar" name="registrar" value="agregar" />
+        <!-- Botones -->
+        <div class="row">
+            <div class="col-md-4">
+                 </div>
+          <div class="col-md-4">
+            <input  type="button" id="registrar" name="registrar" value="Agregar" onclick="addPizza();" class="btn btn-success" />
+          </div>
+          <div class="col-md-4">
+            <input  type="button" id="Actualizar" name="Actualizar" value="Actualizar" onclik="modificar();" class="btn btn-warning" disabled/>
+          </div>
+        </div>
+
+      </form>
+      
+      <div class="row justify-content-md-center mt-5">
+        <table class="col-md-6 text-center">
+          <thead>
+            <tr>
+              <th>Tamaño</th>
+              <th>Ingredientes</th>
+              <th>Numero de pizzas</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="tblPizza"></tbody>
+        </table>
+      </div>
+
+      <div class="row" style="margin-top: 60px;">
+        <div class="col-md-4">
+        </div>
+    <div class="col-md-4">
+        <input type="button" id="eliminar" name="eliminar" value="Eliminar" onclick="eliminar();" class="btn btn-danger" />
+      </div>
+      <div class="col-md-4">
+        <input type="button" id="terminar" name="terminar" value="Terminar" onclick="terminar();"style="background-color: chartreuse; color: white; padding: 10px; border: none; cursor: pointer;" />
+      </div>
+    </div>
+    <div class="col-md-4-" >
+    <h4>  Ventas </h4>
+      {% for resultado in resultados %}
+        <p>
+          Nombre Completo: {{ resultado.nombre_completo }},
+          Total: {{ resultado.total }},
+          {% if dia_button_clicked %}
+            Día del Mes: {{ resultado.day_of_month }}
+          {% elif mes_button_clicked %}
+            Mes del Año: {{ resultado.month_of_year }}
+          {% endif %}
+        </p>
+      {% endfor %}
+
+      <!-- Suma de Totales -->
+      <p>
+        Suma de Totales: {{ suma }}
+      </p>
+      <div class="row">
+      <!-- Formularios de Botones -->
+      <form method="post" action="{{ url_for('tabla') }}" class="col-md-4">
+        <input type="submit" name="por_dia" value="Por Día" class="btn btn-secondary">
+      </form>
+
+      <form method="post" action="{{ url_for('tabla2') }}" class="col-md-4">
+        <input type="submit" name="por_mes" value="Por Mes" class="btn btn-secondary">
+    </div>
+    </div>
+    
+   
+</div>
       </form>
     </div>
   </div>
-
 {% endblock %}

@@ -1,11 +1,11 @@
-from flask import Flask,render_template,request,flash,Response,g
+from flask import Flask,render_template,request,flash,Response,g,jsonify
 from flask_wtf.csrf import CSRFProtect
 from flask import redirect
 import forms
 import formspizza
 from models import db
 from datetime import datetime
-
+from sqlalchemy import func
 from config import DevelopmentConfig
 from models import Empleado
 from models import Cliente
@@ -117,75 +117,100 @@ def modificar():
 
 @app.route("/pizzaA",methods=["GET","POST"])
 def pizzaA():
+  
     pizza_form=formspizza.PizzaForm(request.form)
     pizza_form2=formspizza.clienteForm(request.form)
-    t=pizza_form.tamanio.data
-    i=pizza_form.ingredientes.data
-    print(t,i)
     return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form)
 
-@app.route("/regritrarP",methods=["GET","POST"])
-def registra():
-    fecha_compra = datetime.now().date()
-    pizza_form=formspizza.PizzaForm(request.form)
-    pizza_form2=formspizza.clienteForm(request.form)
-    t=int(pizza_form.tamanio.data)
-    i=int(len(pizza_form.ingredientes.data))
-    subtotal=0
-    if t==40:
-        tam='Chica'
-    elif t==80:
-        tam='Mediana'
-    elif t==120:
-        tam='Grande'
-    
-    if i>1:
-        ingre = ', '.join(pizza_form.ingredientes.data)
-    else:
-        ingre=pizza_form.tamanio.data
-    
-    if request.method=='POST' and pizza_form.validate() and pizza_form2.validate():
-        subtotal=t+(10*i)
-        cl=Cliente(nombre_completo=pizza_form2.nombreCompleto.data,
-                      telefono=pizza_form2.telefono.data,
-                      direcion=pizza_form2.direccion.data,
-                      fecha_compra=fecha_compra)
-         #para mandar los datos seran por seciones 
-        db.session.add(cl)
-        db.session.commit()
-        id_cliente = cl.idCliente
-        pizza=Pizza(tamanio=tam,ingredientes=ingre,numero_pizza=pizza_form.numeropizza.data,subtotal=subtotal,idCliente=id_cliente)
-        
-        try:    
-            
-            db.session.add(pizza)
-            db.session.commit()
-            print(idPizza=pizza.idPizza)
-            print("aqui")
-        except Exception as e:
-            print(f"Error al realizar la inserción: {e}")
-    
-    db.session.rollback()  # Deshacer la transacción en caso de error
-
-   
-
-
-    return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form)
 
 @app.route("/tabla",methods=["GET","POST"])
 def tabla():
+    dia_button_clicked = True
+    mes_button_clicked = False
+    resultados = (
+    db.session.query(
+        Cliente.nombre_completo,
+        func.sum(Venta.total).label('total'),
+        func.day(Venta.fecha_venta).label('day_of_month')
+    )
+    .join(Venta, Venta.idCliente == Cliente.idCliente)
+    .group_by(Cliente.nombre_completo, func.day(Venta.fecha_venta))
+    .all()
+)
+
+
+    # Calcular la suma de los totales
+    suma_totales = str(sum(resultado.total for resultado in resultados))
+
     pizza_form=formspizza.PizzaForm(request.form)
-    #para hacer una consulta
-    pizza=Pizza.query.all()
-    if 'btn1' in request.form:
-        print(request.form)
-    return render_template("vistaPizzaQTV.html",pizza=pizza)
+    pizza_form2=formspizza.clienteForm(request.form)
+
+    return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form,resultados=resultados,suma=suma_totales,dia_button_clicked=dia_button_clicked, mes_button_clicked=mes_button_clicked)
+
+@app.route("/tabla2",methods=["GET","POST"])
+def tabla2():
+    dia_button_clicked = False
+    mes_button_clicked = True
+    resultados = (
+    db.session.query(
+        Cliente.nombre_completo,
+        func.sum(Venta.total).label('total'),
+        func.day(Venta.fecha_venta).label('month_of_year')
+    )
+    .join(Venta, Venta.idCliente == Cliente.idCliente)
+    .group_by(Cliente.nombre_completo, func.day(Venta.fecha_venta))
+    .all()
+)
 
 
+    # Calcular la suma de los totales
+    suma_totales = str(sum(resultado.total for resultado in resultados))
+
+    pizza_form=formspizza.PizzaForm(request.form)
+    pizza_form2=formspizza.clienteForm(request.form)
+
+    return render_template("vistaPizzaAgregar.html",form=pizza_form2,form2=pizza_form,resultados=resultados,suma=suma_totales,dia_button_clicked=dia_button_clicked, mes_button_clicked=mes_button_clicked)
+
+
+@app.route('/vista',methods=["POST"])
+def inicio():
+    data = request.json
+    NC = data.get('nombreCompleto')
+    tel=data.get('telefono')
+    di=data.get('direccion')
+    pizzas=data.get('pizzas', [])
+    t=data.get('total')
+    fecha_compra = datetime.now().date()
+    cl=Cliente(nombre_completo=NC,
+                      telefono=tel,
+                      direcion=di,
+                      fecha_compra=fecha_compra)
+         #para mandar los datos seran por seciones 
+    db.session.add(cl)
+    db.session.commit()
+    id_cliente = cl.idCliente
+    for pizza in pizzas:
+        tamanio = pizza.get('tamanio')
+        ingredientes = pizza.get('ingredientes')
+        numPizza = pizza.get('numPizza')
+        subtotal = pizza.get('subtotal')
+
+    # Crear una instancia del modelo Pizza y asignar el ID del cliente
+        pizza_model = Pizza(tamanio=tamanio, ingredientes=ingredientes, numero_pizza=numPizza, subtotal=subtotal, idCliente=id_cliente)
+
+    # Agregar la pizza a la base de datos
+        db.session.add(pizza_model)
+        db.session.commit()
+
+    venta=Venta(idCliente=id_cliente,total=t,fecha_venta=fecha_compra)
+    db.session.add(venta)
+    db.session.commit()    
+    response = {"success": True, "message": "exitoso"}
+    return jsonify(response)    
 
 #especificar el metodo que va a arrancar la aplicacion 
 if __name__=="__main__":
-    csrf.init_app(app)
+    #csrf.init_app(app)
     db.init_app(app)
    # with app.app_context():
    #     db.create_all()

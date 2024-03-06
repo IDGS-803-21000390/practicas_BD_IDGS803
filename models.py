@@ -36,9 +36,8 @@ class Cliente(db.Model):
     fecha_compra =db.Column(db.Date)
 
 class Venta(db.Model):
-    __tablename__ = 'ventas'
+    __tablename__ = 'venta'
     idVenta = db.Column(db.Integer,primary_key=True)
     idCliente = db.Column(db.Integer)
-    idPizza = db.Column(db.Integer)
     total = db.Column(db.Integer)
     fecha_venta = db.Column(db.Date)
